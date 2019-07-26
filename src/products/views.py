@@ -4,6 +4,25 @@ from .models import Product
 from django.views.generic import ListView, DetailView
 # Create your views here.
 
+
+class ProductFeaturedListview(ListView):
+	template_name = 'products/list.html'
+
+	def get_queryset(self, *args, **kwargs):
+		# return Product.objects.features()
+		return Product.objects.all().featured()
+
+
+class ProductFeaturedDetailview(DetailView):
+	template_name = 'products/featured-detail.html'
+
+	def get_queryset(self):
+		pk = self.kwargs.get('pk')
+		# qs = Product.objects.features()
+		qs = Product.objects.filter(pk=pk).featured()
+		return qs
+
+
 class ProductListview(ListView):
 	# queryset = Product.objects.all()
 	template_name = 'products/list.html'
@@ -27,6 +46,26 @@ def product_list_view(request):
 	return render(request, 'products/list.html', context)
 
 
+class ProductDetailSlugview(DetailView):
+	queryset = Product.objects.all()
+	template_name = 'products/detail.html'
+
+	def get_object(self, *args, **kwargs):
+		request = self.request
+		slug = self.kwargs.get('slug')
+		# instance = get_object_or_404(Product, slug=slug, active=True)
+		try:
+			instance = Product.objects.get(slug=slug)
+		except Product.DoesNotExist:
+			raise Http404("Not found...")
+		except Product.MultipleObjectsReturned:
+			qs = Product.objects.filter(slug=slug)
+			instance = qs.first()
+		except:
+			raise Http404('Uhmmm')
+		return instance
+
+
 class ProductDetailview(DetailView):
 	# queryset = Product.objects.all()
 	template_name = 'products/detail.html'
@@ -43,7 +82,7 @@ class ProductDetailview(DetailView):
 	# 	pk = self.kwargs.get('pk')
 	# 	instance = Product.objects.get_by_id(pk)
 	# 	if instance is None:
-	# 		raise Http404("No product founf in cbv detailview")
+	# 		raise Http404("No product found in cbv detailview")
 	# 	return instance
 	# Since we use get_object we do not need queryset on the top(commented)
 
